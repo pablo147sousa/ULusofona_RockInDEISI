@@ -5,7 +5,7 @@ public class Details {
     int duracao, popularidade, letraExplicita;
     double dancabilidade, vivacidade, volume;
 
-    public Details(String idTemaMusical, int duracao, int popularidade, int letraExplicita, double dancabilidade, double vivacidade, double volume) {
+    public Details(String idTemaMusical, int duracao, int letraExplicita, int popularidade, double dancabilidade, double vivacidade, double volume) {
         this.idTemaMusical = idTemaMusical;
         this.duracao = duracao;
         this.popularidade = popularidade;
@@ -18,9 +18,6 @@ public class Details {
     public Details(int duracao, int popularidade) {
         this.duracao = duracao;
         this.popularidade = popularidade;
-    }
-
-    public Details() {
     }
 
     @Override

@@ -9,3 +9,4 @@
 1l4CEjapdCSUsazfBMjR4l @ ['Rosemary Clooney']
 6r8k1vznHrzlEKYxL4dZEe @ ['Madonna']
 1fEepJX6lz8fqhDRsNxkQp @ "['Antônio Carlos Jobim', 'Vinícius de Moraes']"
+0nxvFG50rGXkiGQqOO2MHy @ "['La Sonora Matancera', 'Carlos Argentino']"

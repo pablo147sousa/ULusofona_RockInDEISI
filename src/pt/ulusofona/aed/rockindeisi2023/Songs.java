@@ -2,11 +2,10 @@ package pt.ulusofona.aed.rockindeisi2023;
 
 public class Songs {
     String idTemaMusical, nome;
-    int anoLancamento, duracao;
-    Integer popularidade;
-    Artists artista = new Artists();
+    int anoLancamento, numArtistas = 0;
 
-    Details detalhes = new Details();
+    Details detalhes;
+
 
 
     public Songs(String idTemaMusical, String nome, Integer anoLancamento) {
@@ -14,16 +13,25 @@ public class Songs {
         this.nome = nome;
         this.anoLancamento = anoLancamento;
     }
+    public String getId() {
+        return idTemaMusical;
+    }
+
+    public static String converteDuracao(long millis) {
+        int seconds = (int) (millis / 1000) % 60;
+        int minutes = (int) ((millis / (1000*60)) % 60);
+        return String.format("%d:%02d", minutes, seconds);
+    }
 
     @Override
     public String toString() {
-
-        if(anoLancamento < 1995) {
-            return idTemaMusical + " | " + nome + " | " + anoLancamento;
+        String texto = idTemaMusical + " | " + nome + " | " + anoLancamento;
+        if(anoLancamento>= 1995 && anoLancamento < 2000){
+            texto += " | " + converteDuracao(detalhes.duracao)  + " | " + detalhes.popularidade;
         }
-        if(anoLancamento < 2000){
-            return idTemaMusical + " | " + nome + " | " + anoLancamento + " | " + duracao + " | " + popularidade;
+        if (anoLancamento>=2000) {
+            texto += " | " + converteDuracao(detalhes.duracao) + " | " + detalhes.popularidade + " | " + numArtistas;
         }
-        return idTemaMusical + " | " + nome + " | " + anoLancamento + " | " + detalhes.duracao + " | " + detalhes.popularidade + " | " + artista.artista;
+        return texto;
     }
 }

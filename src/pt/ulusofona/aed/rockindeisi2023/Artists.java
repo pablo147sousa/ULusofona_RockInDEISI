@@ -4,28 +4,24 @@ import java.util.ArrayList;
 
 public class Artists {
     String idTemaMusical;
-    public int numMusicas;
-    String artista;
+    public int numMusicas = 1;
+    String nomeArtista;
 
-    public Artists(String id, String artista) {
+    public Artists(String idTemaMusical, String nomeArtista) {
         this.idTemaMusical = idTemaMusical;
-        this.artista = artista;
-        this.numMusicas = numMusicas;
+        this.nomeArtista = nomeArtista;
     }
 
-    public Artists(String artista, int numMusicas) {
-        this.artista = artista;
+    public Artists(String nomeArtista, int numMusicas) {
+        this.nomeArtista = nomeArtista;
         this.numMusicas = numMusicas;
-    }
-
-    public Artists() {
     }
 
     public String toString() {
-        if(artista.charAt(2) == 'A' || artista.charAt(2) == 'B' ||artista.charAt(2) == 'C' ||artista.charAt(2) == 'D') {
-            return "Artista: " + artista;
+        if(nomeArtista.charAt(0) == 'A' || nomeArtista.charAt(0) == 'B' ||nomeArtista.charAt(0) == 'C' ||nomeArtista.charAt(0) == 'D') {
+            return "Artista: [" + nomeArtista + "]";
         }else{
-            return "Artista: " + artista + " | " + numMusicas;
+            return "Artista: [" + nomeArtista + "] | " + numMusicas;
         }
     }
 }
