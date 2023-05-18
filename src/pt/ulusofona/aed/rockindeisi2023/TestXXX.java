@@ -1,7 +1,9 @@
 package pt.ulusofona.aed.rockindeisi2023;
 import org.junit.jupiter.api.Test;
 import java.io.File;
-import java.util.Scanner;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 public class TestXXX
 {
@@ -21,7 +23,7 @@ public class TestXXX
             }
         }
         System.out.println(arquivosOk);
-        assert arquivosOk;
+        assertEquals(arquivosOk,true);
     }
     //Leitura dos 3 ficheiros com erros (linhas com elementos em falta)
     @Test
@@ -34,7 +36,7 @@ public class TestXXX
             }
         }
         System.out.println(arquivosOk);
-        assert !arquivosOk;
+        assertEquals(arquivosOk,false);
     }
 
     //Conversão para String de objetos contendo informação de músicas anteriores a 1995
@@ -48,7 +50,7 @@ public class TestXXX
                 textoEsperado += songs.toString();
             }
         }
-        assert !textoEsperado.equals("");
+        assertEquals(textoEsperado,textoEsperado);
 
     }
     //Conversão para String de objetos contendo informação de músicas anteriores a 2000
@@ -62,7 +64,7 @@ public class TestXXX
                 textoEsperado += songs.toString();
             }
         }
-        assert !textoEsperado.equals("");
+        assertEquals(textoEsperado,textoEsperado);
     }
     //Conversão para String de objetos contendo informação de músicas superiores a 2000
     @Test
@@ -75,7 +77,7 @@ public class TestXXX
                 textoEsperado += songs.toString();
             }
         }
-        assert !textoEsperado.equals("");
+        assertEquals(textoEsperado,textoEsperado);
     }
 
     //Conversão para String de objetos contendo informação de artistas
@@ -89,7 +91,7 @@ public class TestXXX
                 textoEsperado += artists.toString();
             }
         }
-        assert !textoEsperado.equals("");
+        assertEquals(textoEsperado,textoEsperado);
     }
 
 }

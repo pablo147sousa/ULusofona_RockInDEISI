@@ -49,9 +49,6 @@ public class Main {
         //Check if exists
         for (int j = 0; j < songArray.size(); j++) {
             if (songArray.get(j).idTemaMusical.equals(id)) {
-                System.out.println("IGUAL");
-                System.out.println(songArray.get(j).idTemaMusical);
-                System.out.println(id);
                 return true;
             }
         }
@@ -77,7 +74,6 @@ public class Main {
             if (!idMusicaExiste(partes[0].trim())) {
                 songArray.add(new Songs(id, nome, ano));
             } else {
-                System.out.println("ERRO ID DUPLICADO");
                 return LineResult.ERRO;
             }
         }
@@ -89,7 +85,6 @@ public class Main {
         if (partes.length == 7) {
             detailsArray.add(new Details(partes[0].trim(), Integer.parseInt(partes[1].trim()), Integer.parseInt(partes[2].trim()), Integer.parseInt(partes[3].trim()), Double.parseDouble(partes[4].trim()), Double.parseDouble(partes[5].trim()), Double.parseDouble(partes[6].trim())));
         } else {
-            System.out.println("ERRO: DIFRENTE DE 7");
             return LineResult.ERRO;
         }
         return LineResult.OK;
@@ -103,7 +98,6 @@ public class Main {
             }
         }
         if (count != 1) {
-            //System.out.println("ERRO: DIFRENTE DE 2");
             return false;
         }
 
@@ -133,7 +127,6 @@ public class Main {
             }
             return true;
         } else {
-            System.out.println("ERRO: DIFRENTE DE 2");
             return false;
         }
     }
@@ -176,8 +169,6 @@ public class Main {
             }
             fileInputResults.add(new FileInputResult("songs.txt", numSemErro, numNaoOk, primeiraLinhaNOK));
         } catch (Exception e) {
-            System.out.println("ERRO");
-            System.out.println(e.getMessage());
             return false;
         }
         //DETALHES
@@ -201,8 +192,6 @@ public class Main {
             }
             fileInputResults.add(new FileInputResult("song_details.txt", numSemErro, numNaoOk, primeiraLinhaNOK));
         } catch (Exception e) {
-            System.out.println("ERRO");
-            System.out.println(e.getMessage());
             return false;
         }
         // ARTISTS
@@ -226,13 +215,44 @@ public class Main {
             }
             fileInputResults.add(new FileInputResult("song_artists.txt", numSemErro, numNaoOk, primeiraLinhaNOK));
         } catch (Exception e) {
-            System.out.println("ERRO");
-            System.out.println(e.getMessage());
             return false;
         }
-        //verMusicasSemDetalhes();
-        //adicionaArtistas();
         return true;
+    }
+    //parse command vai receber a string e converter isso em um objeto Query
+    public static Query parseCommand(String command) {
+        String[] splitCommand = command.split(" ");
+        String queryName = splitCommand[0];
+        String[] queryArgs = new String[splitCommand.length - 1];
+        System.arraycopy(splitCommand, 1, queryArgs, 0, splitCommand.length - 1);
+        return new Query(queryName, queryArgs);
+    }
+
+
+    static ArrayList parseMultipleArtists(String line) {
+        return new ArrayList();
+    }
+ // O execute tem que executar o parsecommand
+    static QueryResult execute(String command) {
+        if (command.equals(Querys.COUNT_SONGS_YEAR.toString())){
+            return new QueryResult();
+        }
+        if (command.equals(Querys.ADD_TAGS.toString())){
+            return new QueryResult();
+        }
+        if (command.equals(Querys.GET_ARTISTS_FOR_TAG.toString())){
+            return new QueryResult();
+        }
+        if (command.equals(Querys.GET_SONGS_BY_ARTIST.toString())){
+            return new QueryResult();
+        }
+        if (command.equals(Querys.REMOVE_TAGS.toString())){
+            return new QueryResult();
+        }
+        if (command.equals(Querys.GET_MOST_DANCEABLE.toString())){
+            return new QueryResult();
+        }
+        return null;
     }
 
     // PROVAVELMENTE SERÁ ALTERADO NA PARTE 2
@@ -280,17 +300,20 @@ public class Main {
         return new ArrayList();
     }
 
-    public static void main(String[] args) {
-        //System.out.println(loadFiles(new File("test-files")));
+    public static void main(String[] args)
+    {
         if (loadFiles(new File("src/pt/ulusofona/aed/rockindeisi2023/files"))) {
             Scanner scanner = new Scanner(System.in);
-            System.out.println("Escolha o tipo de entidade (TEMA ou ARTISTA):");
             String tipo = scanner.nextLine().toUpperCase();
-
-            ArrayList lista = getObjects(TipoEntidade.valueOf(tipo));
-
-            for (Object obj : lista) {
-                System.out.println(obj);
+            while (tipo != null && !tipo.equals(Querys.EXIT.toString())) {
+                QueryResult result = execute(tipo);
+                if (result == null) {
+                    System.out.println("Illegal command. Try again");
+                } else {
+                    System.out.println(result.result);
+                    System.out.println("(took " + result.time + " ms)");
+                }
+                tipo = scanner.nextLine();
             }
         }
     }
