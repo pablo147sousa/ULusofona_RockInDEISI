@@ -18,13 +18,13 @@ public class Main {
     static ArrayList<Artists> artistsArrayFinal = new ArrayList<>();
 
     public enum LineResult {
-        OK, ERRO;
+        OK, ERRO
     }
 
 
     public static boolean validarArtista(String artistaTexto) {
-        String artistaSolo = "\\['[^']*'\\]";
-        String artistasMultiplos = "\"\\['([^']', )[^']*'\\]\"";
+        String artistaSolo = "\\['[^']*']";
+        String artistasMultiplos = "\"\\['([^']', )[^']*']\"";
         return artistaTexto.matches(artistaSolo) || artistaTexto.matches(artistasMultiplos);
     }
 
@@ -47,16 +47,14 @@ public class Main {
         String id = partes[0].trim();
         String nome = partes[1].trim();
 
-        if (idsDuplicados.contains(id)) {
+        if (idsDuplicados.contains(id) || !idTemasMusicais.contains(id)) {
             return LineResult.ERRO;
         } else {
             int ano = Integer.parseInt(partes[2].trim().replace("@", ""));
             songArray.put(id, new Songs(id, nome, ano));
-
             // Adicione o ID ao conjunto de IDs duplicados
             idsDuplicados.add(id);
         }
-
         return LineResult.OK;
     }
 
@@ -79,50 +77,37 @@ public class Main {
 
         if (validarArtista(partes[1])) {
             String musicaID = partes[0];
-            String artista = partes[1];
+            String artista = processArtistString(partes[1]);
 
             // Verificar se a música existe antes de percorrer os artistas
             if (songArray.containsKey(musicaID)) {
                 // Verificar se o artista já foi adicionado antes
                 if (!artistsArray.containsKey(artista)){
                     artistsArray.put(artista,new Artists(musicaID,artista));
+                    return true;
                 }
             }
-            return songArray.containsKey(musicaID);
         }
         return false;
     }
 
 
     //RECEBE A STRING DO ARTISTA E REMOVE OS CARACTERES INDESEJAVEIS RETORNANDO UMA STRING PROCESSADA.
-    public static ArrayList<String> getArtists(String artists) {
-        ArrayList<String> artistas = new ArrayList();
+    public static String processArtistString(String artists) {
         artists = artists.trim();
-        boolean multiple = false;
-        if (artists.charAt(0) == '\"'){
-            multiple = true;
-        }
         artists = artists.replace("[", "");
         artists = artists.replace("]", "");
         artists = artists.replace("\"", "");
         artists = artists.trim();
         String[] partes = artists.split("'");
-        for (int i = 0; i < partes.length; i++) {
-            artistas.add(partes[i].trim());
-        }
-        // remove any empty strings or strings with ,
-        for (int i = 0; i < artistas.size(); i++) {
-            if (artistas.get(i).equals("") || artistas.get(i).equals(",")) {
-                artistas.remove(i);
+        StringBuilder processedString = new StringBuilder();
+        for (String parte : partes) {
+            String part = parte.trim();
+            if (!part.isEmpty() && !part.equals(",")) {
+                processedString.append(part).append(" ");
             }
         }
-        if (multiple){
-            return artistas;
-        }else if(artistas.size() > 1) {
-            return new ArrayList<String>();
-        } else {
-            return artistas;
-        }
+        return processedString.toString().trim();
     }
     public static String[] dividirArgs(String args, String divisor){
         String[] resultado = null;
@@ -210,8 +195,6 @@ public class Main {
         return new Query(commandParts[0], args);
     }
 
-
-
     public static ArrayList<String> parseMultipleArtists(String line) {
         ArrayList<String> nomes = new ArrayList<>();
 
@@ -262,28 +245,17 @@ public class Main {
 
         return null;
     }
-    public static boolean artistaExiste(String artista) {
-        //Check if exists
-        for (int j = 0; j < artistsArray.size(); j++) {
-            if (artistsArray.get(j).nomeArtista.equals(artista)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
     public static ArrayList getObjects(TipoEntidade tipo) {
         idsDuplicados.clear();
-        for (Map.Entry<String, Songs> entry : songArray.entrySet()) {
-            songArrayFinal.add(entry.getValue());
-        }
-        for (Map.Entry<String, Artists> entry : artistsArray.entrySet()) {
-            artistsArrayFinal.add(entry.getValue());
-        }
         if (tipo == TipoEntidade.TEMA) {
+            for (Map.Entry<String, Songs> entry : songArray.entrySet()) {
+                songArrayFinal.add(entry.getValue());
+            }
             return songArrayFinal;
         } else if (tipo == TipoEntidade.ARTISTA) {
+            for (Map.Entry<String, Artists> entry : artistsArray.entrySet()) {
+                artistsArrayFinal.add(entry.getValue());
+            }
             return artistsArrayFinal;
         } else if (tipo == TipoEntidade.INPUT_INVALIDO) {
             return fileInputResults;
