@@ -6,6 +6,7 @@ public class Artists {
     String idTemaMusical;
     public int numMusicas = 1;
     String nomeArtista;
+    ArrayList<String> tags = new ArrayList<>(),musicas = new ArrayList<>();
 
     public Artists(String idTemaMusical, String nomeArtista) {
         this.idTemaMusical = idTemaMusical;
