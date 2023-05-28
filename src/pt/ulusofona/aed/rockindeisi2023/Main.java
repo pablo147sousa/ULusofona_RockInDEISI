@@ -9,9 +9,9 @@ import static pt.ulusofona.aed.rockindeisi2023.QuerysEnum.*;
 
 public class Main {
     static HashSet<String> idTemasMusicais = new HashSet<>();
-    static LinkedHashMap<String,Songs> songArray = new LinkedHashMap<>();
-    static LinkedHashMap<String,Details> detailsArray = new LinkedHashMap<>();
-    static LinkedHashMap<String,Artists> artistsArray = new LinkedHashMap<>();
+    static LinkedHashMap<String,Songs> songMap = new LinkedHashMap<>();
+    static LinkedHashMap<String,Details> detailsMap = new LinkedHashMap<>();
+    static LinkedHashMap<String,Artists> artistsMap = new LinkedHashMap<>();
     static HashSet<String> idsDuplicados = new HashSet<>();
     static ArrayList<FileInputResult> fileInputResults = new ArrayList<>();
     static ArrayList<Songs> songArrayFinal = new ArrayList<>();
@@ -29,9 +29,9 @@ public class Main {
     }
 
     public static void clearAll() {
-        songArray.clear();
-        detailsArray.clear();
-        artistsArray.clear();
+        songMap.clear();
+        detailsMap.clear();
+        artistsMap.clear();
         fileInputResults.clear();
     }
     // Inicialize o conjunto para rastrear IDs duplicados
@@ -51,7 +51,9 @@ public class Main {
             return LineResult.ERRO;
         } else {
             int ano = Integer.parseInt(partes[2].trim().replace("@", ""));
-            songArray.put(id, new Songs(id, nome, ano));
+            Songs songAdd = new Songs(id, nome, ano);
+            songMap.put(id, songAdd);
+            songAdd.detalhes = new Details(detailsMap.get(id).duracao, detailsMap.get(id).popularidade);
             // Adicione o ID ao conjunto de IDs duplicados
             idsDuplicados.add(id);
         }
@@ -62,13 +64,33 @@ public class Main {
         String[] partes = detalhes.split(" @ ");
         if (partes.length == 7) {
             idTemasMusicais.add(partes[0].trim());
-            detailsArray.put(partes[0].trim(),new Details(partes[0].trim(), Integer.parseInt(partes[1].trim()), Integer.parseInt(partes[2].trim()), Integer.parseInt(partes[3].trim()), Double.parseDouble(partes[4].trim()), Double.parseDouble(partes[5].trim()), Double.parseDouble(partes[6].trim())));
+            detailsMap.put(partes[0].trim(),new Details(partes[0].trim(), Integer.parseInt(partes[1].trim()), Integer.parseInt(partes[2].trim()), Integer.parseInt(partes[3].trim()), Double.parseDouble(partes[4].trim()), Double.parseDouble(partes[5].trim()), Double.parseDouble(partes[6].trim())));
         } else {
             return LineResult.ERRO;
         }
         return LineResult.OK;
     }
-
+    /*
+    * public static void verMusicasSemDetalhes() {
+        // musicas nao tem detalhes
+        songArrayProcessado.clear();
+        for (Songs songs : songArray) {
+            for (Details details : detailsArray) {
+                if (songs.idTemaMusical.equals(details.idTemaMusical)) {
+                    songs.detalhes = new Details(details.duracao, details.popularidade);
+                    if (songs.numArtistas > 0) {
+                        for (Songs songArrayProcessado : songArrayProcessado) {
+                            if (songs.idTemaMusical.equals(songArrayProcessado.idTemaMusical)) {
+                                break;
+                            }
+                        }
+                        songArrayProcessado.add(songs);
+                    }
+                }
+            }
+        }
+    }
+    * */
     public static boolean adicionarArtista(String artistasStr) {
         String[] partes = artistasStr.split(" @ ");
         if (partes.length != 2){
@@ -80,10 +102,10 @@ public class Main {
             String artista = processArtistString(partes[1]);
 
             // Verificar se a música existe antes de percorrer os artistas
-            if (songArray.containsKey(musicaID)) {
+            if (songMap.containsKey(musicaID)) {
                 // Verificar se o artista já foi adicionado antes
-                if (!artistsArray.containsKey(artista)){
-                    artistsArray.put(artista,new Artists(musicaID,artista));
+                if (!artistsMap.containsKey(artista)){
+                    artistsMap.put(artista,new Artists(musicaID,artista));
                     return true;
                 }
             }
@@ -248,12 +270,12 @@ public class Main {
     public static ArrayList getObjects(TipoEntidade tipo) {
         idsDuplicados.clear();
         if (tipo == TipoEntidade.TEMA) {
-            for (Map.Entry<String, Songs> entry : songArray.entrySet()) {
+            for (Map.Entry<String, Songs> entry : songMap.entrySet()) {
                 songArrayFinal.add(entry.getValue());
             }
             return songArrayFinal;
         } else if (tipo == TipoEntidade.ARTISTA) {
-            for (Map.Entry<String, Artists> entry : artistsArray.entrySet()) {
+            for (Map.Entry<String, Artists> entry : artistsMap.entrySet()) {
                 artistsArrayFinal.add(entry.getValue());
             }
             return artistsArrayFinal;
