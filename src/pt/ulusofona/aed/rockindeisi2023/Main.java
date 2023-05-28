@@ -275,8 +275,12 @@ public class Main {
 
     public static ArrayList getObjects(TipoEntidade tipo) {
         idsDuplicados.clear();
-        songArrayFinal.addAll(songArray.values());
-        artistsArrayFinal.addAll(artistsArray.values());
+        for (Map.Entry<String, Songs> entry : songArray.entrySet()) {
+            songArrayFinal.add(entry.getValue());
+        }
+        for (Map.Entry<String, Artists> entry : artistsArray.entrySet()) {
+            artistsArrayFinal.add(entry.getValue());
+        }
         if (tipo == TipoEntidade.TEMA) {
             return songArrayFinal;
         } else if (tipo == TipoEntidade.ARTISTA) {
