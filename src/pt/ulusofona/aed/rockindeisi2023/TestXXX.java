@@ -2,6 +2,7 @@ package pt.ulusofona.aed.rockindeisi2023;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import java.io.File;
+import java.util.ArrayList;
 
 public class TestXXX
 {
@@ -16,6 +17,26 @@ public class TestXXX
         Assertions.assertArrayEquals(new String[] { "a'aa", "bbb"}, Main.parseMultipleArtists("[\"\"a'aa\"\", 'bbb']").toArray());
         Assertions.assertArrayEquals(new String[] { "a' aa", "b, bb", "ccc"}, Main.parseMultipleArtists("[\"\"a' aa\"\", 'b, bb', 'ccc']").toArray());
     }
+    @Test
+    public void inputInvalido(){
+        Main.loadFiles(new File("teste_files"));
+        ArrayList resultado = Main.getObjects(TipoEntidade.INPUT_INVALIDO);
+        for (Object o : resultado) {
+            System.out.println(o.toString());
+        }
+    }
+    @Test
+    public void inputTemas(){
+        Main.loadFiles(new File("teste_files"));
+        ArrayList resultado = Main.getObjects(TipoEntidade.TEMA);
+
+        for (Object o : resultado) {
+            System.out.println(o);
+        }
+        assert resultado != null;
+    }
+
+
     @Test
     public void medirTempos()
     {

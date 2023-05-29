@@ -1,15 +1,18 @@
 package pt.ulusofona.aed.rockindeisi2023;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 public class Artists {
-    String idTemaMusical;
-    public int numMusicas = 1;
-    String nomeArtista;
-    ArrayList<String> tags = new ArrayList<>(),musicas = new ArrayList<>();
+    String idTemaMusical,nomeArtista;
+    ArrayList<String> idTemas = new ArrayList<>();
 
-    public Artists(String idTemaMusical, String nomeArtista) {
-        this.idTemaMusical = idTemaMusical;
+    public int numMusicas = 1;
+
+    ArrayList<String> tags = new ArrayList<>();
+    ArrayList<String> musicas = new ArrayList<>();
+
+    public Artists(String nomeArtista) {
         this.nomeArtista = nomeArtista;
     }
 
