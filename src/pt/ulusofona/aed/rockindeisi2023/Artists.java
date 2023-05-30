@@ -12,10 +12,10 @@ public class Artists {
     ArrayList<String> tags = new ArrayList<>();
     ArrayList<String> musicas = new ArrayList<>();
 
-    public Artists(String nomeArtista) {
+    public Artists(String idTemaMusical, String nomeArtista) {
+        this.idTemaMusical = idTemaMusical;
         this.nomeArtista = nomeArtista;
     }
-
     public Artists(String nomeArtista, int numMusicas) {
         this.nomeArtista = nomeArtista;
         this.numMusicas = numMusicas;

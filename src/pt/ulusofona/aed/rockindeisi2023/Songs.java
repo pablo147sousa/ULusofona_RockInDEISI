@@ -8,15 +8,11 @@ public class Songs {
 
 
 
-    public Songs(String idTemaMusical, String nome, Integer anoLancamento) {
+    public Songs(String idTemaMusical, String nome, int anoLancamento) {
         this.idTemaMusical = idTemaMusical;
         this.nome = nome;
         this.anoLancamento = anoLancamento;
     }
-    public String getId() {
-        return idTemaMusical;
-    }
-
     public static String converteDuracao(long millis) {
         int seconds = (int) (millis / 1000) % 60;
         int minutes = (int) ((millis / (1000*60)) % 60);

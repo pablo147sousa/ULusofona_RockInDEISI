@@ -42,7 +42,7 @@ public class TestXXX
     {
 
         long tempoInicial = System.currentTimeMillis();
-        Main.loadFiles(new File("teste_files"));
+        Main.loadFiles(new File("large_files"));
         long tempoFinal = System.currentTimeMillis();
         long resultado = tempoFinal-tempoInicial;
         System.out.println(resultado);

@@ -12,10 +12,7 @@ public class Main {
     static LinkedHashMap<String,Songs> songMap = new LinkedHashMap<>();
     static LinkedHashMap<String,Details> detailsMap = new LinkedHashMap<>();
     static LinkedHashMap<String,Artists> artistsMap = new LinkedHashMap<>();
-    static HashSet<String> idsDuplicados = new HashSet<>();
     static ArrayList<FileInputResult> fileInputResults = new ArrayList<>();
-    static ArrayList<Songs> songArrayFinal;
-    static ArrayList<Artists> artistsArrayFinal;
 
     public enum LineResult {
         OK, ERRO
@@ -24,7 +21,8 @@ public class Main {
 
     private static boolean validarArtista(String part) {
         String unicoArtista = "\\['[^']*'\\]";
-        String artistasMultiplos = "\"\\['([^']', )[^']*'\\]\"";
+        String artistasMultiplos = "^\\\"\\[('[\\w\\s]+')(?:,\\s\\1)*\\]\\\"$";
+
         return part.matches(unicoArtista) || part.matches(artistasMultiplos);
     }
 
@@ -47,19 +45,38 @@ public class Main {
         String id = partes[0].trim();
         String nome = partes[1].trim();
         // VERIFICA SE JÁ FOI CRIADO ANTERIORMENTE
-        if (idsDuplicados.contains(id) || !idTemasMusicais.contains(id)) {
+        if (songMap.containsKey(id)){
             return null;
-        } else {
+        }
+        else {
             // CRIA O SONGS
             int ano = Integer.parseInt(partes[2].trim().replace("@", ""));
+            if (ano < 1){
+                return LineResult.ERRO;
+            }
             Songs songAdd = new Songs(id, nome, ano);
             songMap.put(id, songAdd);
-            songAdd.detalhes = new Details(detailsMap.get(id).duracao, detailsMap.get(id).popularidade);
-            // Adicione o ID ao conjunto de IDs duplicados
-            idsDuplicados.add(id);
+            idTemasMusicais.add(id);
+            return LineResult.OK;
         }
-        return LineResult.OK;
     }
+    public static boolean validacaoArtista(String artistaTexto) {
+        int count = 0;
+        boolean ocorreVirgula = false;
+
+        for (int i = 0; i < artistaTexto.length(); i++) {
+            char c = artistaTexto.charAt(i);
+            if (c == ',') {
+                ocorreVirgula = true;
+            }
+            if (c == '"') {
+                count++;
+            }
+        }
+
+        return !ocorreVirgula || (count == 2 && artistaTexto.charAt(0) == '"');
+    }
+
 
     public static LineResult adicionarDetalhes(String detalhes) {
         String[] partes = detalhes.split(" @ ");
@@ -68,35 +85,22 @@ public class Main {
         if (partes.length != 7){
             return LineResult.ERRO;
         }
-        // VERIFICA SE JÁ FOI CRIADO ANTERIORMENTE
-        if (detailsMap.containsKey(idTema)){
-            return null;
+        Details detalhe = new Details(idTema, Integer.parseInt(partes[1].trim()), Integer.parseInt(partes[2].trim()), Integer.parseInt(partes[3].trim()), Double.parseDouble(partes[4].trim()), Double.parseDouble(partes[5].trim()), Double.parseDouble(partes[6].trim()));
+        if (songMap.containsKey(idTema)){
+            detailsMap.put(idTema,detalhe);
+            songMap.get(idTema).detalhes = detalhe;
+            return LineResult.OK;
         }
-        idTemasMusicais.add(idTema);
-        detailsMap.put(idTema,new Details(idTema, Integer.parseInt(partes[1].trim()), Integer.parseInt(partes[2].trim()), Integer.parseInt(partes[3].trim()), Double.parseDouble(partes[4].trim()), Double.parseDouble(partes[5].trim()), Double.parseDouble(partes[6].trim())));
-        return LineResult.OK;
+        return null;
     }
-    /*
-    * public static void verMusicasSemDetalhes() {
+    public static void verMusicasSemDetalhes() {
         // musicas nao tem detalhes
-        songArrayProcessado.clear();
-        for (Songs songs : songArray) {
-            for (Details details : detailsArray) {
-                if (songs.idTemaMusical.equals(details.idTemaMusical)) {
-                    songs.detalhes = new Details(details.duracao, details.popularidade);
-                    if (songs.numArtistas > 0) {
-                        for (Songs songArrayProcessado : songArrayProcessado) {
-                            if (songs.idTemaMusical.equals(songArrayProcessado.idTemaMusical)) {
-                                break;
-                            }
-                        }
-                        songArrayProcessado.add(songs);
-                    }
-                }
+        for (String id : idTemasMusicais) {
+            if (!detailsMap.containsKey(id)){
+                songMap.remove(id);
             }
         }
     }
-    * */
     public static LineResult adicionarArtista(String artistasStr) {
         String[] partes = artistasStr.split(" @ ");
 
@@ -104,62 +108,53 @@ public class Main {
         if (partes.length != 2) {
             return LineResult.ERRO;
         }
-
         // VERIFICA SE O INPUT ESTÁ BEM FORMATADO
-        if (validarArtista(partes[1])) {
+        if (validacaoArtista(partes[1])) {
+            // Verificar se a música existe antes de percorrer os artistas
             String musicaID = partes[0];
             List<String> artistaArray = getArtists(partes[1]);
-
-            // Verificar se a música existe antes de percorrer os artistas
-            if (songMap.containsKey(musicaID)) {
-                for (String artista : artistaArray) {
+            for (String artista : artistaArray) {
+                if (songMap.containsKey(musicaID)) {
+                    songMap.get(musicaID).numArtistas++;
                     // Verificar se o artista já foi adicionado antes
                     if (!artistsMap.containsKey(artista)) {
-                        Artists newArtist = new Artists(artista);
+                        Artists newArtist = new Artists(musicaID,artista);
                         artistsMap.put(artista, newArtist);
                     } else {
-                        Artists existingArtist = artistsMap.get(artista);
-
-                        // Verificar se a música já foi adicionada pelo artista antes
-                        if (!existingArtist.musicas.contains(musicaID)) {
-                            existingArtist.musicas.add(musicaID);
-                            existingArtist.numMusicas++;
-                        }
+                        artistsMap.get(artista).numMusicas++;
                     }
-                    songMap.get(musicaID).numArtistas++;
                 }
-                return LineResult.OK;
             }
+
         }
-        return null;
+        return LineResult.OK;
     }
-
-
-
-
     //RECEBE A STRING DO ARTISTA E REMOVE OS CARACTERES INDESEJAVEIS RETORNANDO UMA STRING PROCESSADA.
-    public static List<String> getArtists(String artists) {
+    public static ArrayList<String> getArtists(String artists) {
+        ArrayList<String> artistas = new ArrayList();
         artists = artists.trim();
-
-        boolean multiple = artists.startsWith("\"");
-
-        artists = artists.replaceAll("[\\[\\]\"']", "").trim();
-
-        String[] parts = artists.split("'");
-
-        List<String> artistas = new ArrayList<>();
-
-        for (String part : parts) {
-            part = part.trim();
-            if (!part.isEmpty()) {
-                artistas.add(part);
+        boolean multiple = false;
+        if (artists.charAt(0) == '\"'){
+            multiple = true;
+        }
+        artists = artists.replace("[", "");
+        artists = artists.replace("]", "");
+        artists = artists.replace("\"", "");
+        artists = artists.trim();
+        String[] partes = artists.split("'");
+        for (int i = 0; i < partes.length; i++) {
+            artistas.add(partes[i].trim());
+        }
+        // remove any empty strings or strings with ,
+        for (int i = 0; i < artistas.size(); i++) {
+            if (artistas.get(i).equals("") || artistas.get(i).equals(",")) {
+                artistas.remove(i);
             }
         }
-
-        if (multiple) {
+        if (multiple){
             return artistas;
-        } else if (artistas.size() > 1) {
-            return Collections.emptyList();
+        }else if(artistas.size() > 1) {
+            return new ArrayList<String>();
         } else {
             return artistas;
         }
@@ -182,26 +177,7 @@ public class Main {
         int primeiraLinhaNOK = -1;
         int numLinha;
 
-        //DETALHES
-        try {
-            Scanner scanner = new Scanner(new File(folder, "song_details.txt"));
-            numLinha = 0;
-            while (scanner.hasNext()) {
-                numLinha++;
-                if (adicionarDetalhes(scanner.nextLine()) == LineResult.ERRO) {
-                    numNaoOk++;
-                    if (primeiraLinhaNOK == -1) {
-                        primeiraLinhaNOK = numLinha;
-                    }
-                }
-            }
-            fileInputResults.add(new FileInputResult("song_details.txt", numLinha - numNaoOk, numNaoOk, primeiraLinhaNOK));
-        } catch (Exception e) {
-            return false;
-        }
         //SONGS
-        numNaoOk = 0;
-        primeiraLinhaNOK = -1;
         try {
             Scanner scanner = new Scanner(new File(folder, "songs.txt"));
             numLinha = 0;
@@ -218,6 +194,26 @@ public class Main {
         } catch (Exception e) {
             return false;
         }
+        //DETALHES
+        numNaoOk = 0;
+        primeiraLinhaNOK = -1;
+        try {
+            Scanner scanner = new Scanner(new File(folder, "song_details.txt"));
+            numLinha = 0;
+            while (scanner.hasNext()) {
+                numLinha++;
+                if (adicionarDetalhes(scanner.nextLine()) == LineResult.ERRO) {
+                    numNaoOk++;
+                    if (primeiraLinhaNOK == -1) {
+                        primeiraLinhaNOK = numLinha;
+                    }
+                }
+            }
+            fileInputResults.add(new FileInputResult("song_details.txt", numLinha - numNaoOk, numNaoOk, primeiraLinhaNOK));
+        } catch (Exception e) {
+            return false;
+        }
+        verMusicasSemDetalhes();
         // ARTISTS
         numNaoOk = 0;
         primeiraLinhaNOK = -1;
@@ -302,13 +298,10 @@ public class Main {
         return null;
     }
     public static ArrayList getObjects(TipoEntidade tipo) {
-        idsDuplicados.clear();
         if (tipo == TipoEntidade.TEMA) {
-            songArrayFinal = new ArrayList<>(songMap.values());
-            return songArrayFinal;
+            return new ArrayList<>(songMap.values());
         } else if (tipo == TipoEntidade.ARTISTA) {
-            artistsArrayFinal = new ArrayList<>(artistsMap.values());
-            return artistsArrayFinal;
+            return new ArrayList<>(artistsMap.values());
         } else if (tipo == TipoEntidade.INPUT_INVALIDO) {
             return fileInputResults;
         }
@@ -319,15 +312,12 @@ public class Main {
     public static void main(String[] args)
     {
         if (loadFiles(new File("src/pt/ulusofona/aed/rockindeisi2023/files"))) {
-            System.out.println(adicionarArtista("1fEepJX6lz8fqhDRsNxkQp @ \"['Antônio Carlos Jobim', 'Vinícius de Moraes']\""));
-            Scanner scanner = new Scanner(System.in);
-            ArrayList resultado = Main.getObjects(TipoEntidade.TEMA);
-
+            ArrayList resultado = getObjects(TipoEntidade.TEMA);
             for (Object o : resultado) {
                 System.out.println(o);
             }
+            Scanner scanner = new Scanner(System.in);
             String tipo = scanner.nextLine().toUpperCase();
-
             while (tipo != null && !tipo.equals(EXIT.toString())) {
                 QueryResult result = execute(tipo);
                 if (result == null) {
