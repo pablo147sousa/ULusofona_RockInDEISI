@@ -2,13 +2,9 @@ package pt.ulusofona.aed.rockindeisi2023;
 
 public class Songs {
     String idTemaMusical, nome;
-    int anoLancamento, numArtistas = 0;
-
+    Integer anoLancamento, numArtistas = 0;
     Details detalhes;
-
-
-
-    public Songs(String idTemaMusical, String nome, int anoLancamento) {
+    public Songs(String idTemaMusical, String nome, Integer anoLancamento) {
         this.idTemaMusical = idTemaMusical;
         this.nome = nome;
         this.anoLancamento = anoLancamento;
@@ -18,7 +14,6 @@ public class Songs {
         int minutes = (int) ((millis / (1000*60)) % 60);
         return String.format("%d:%02d", minutes, seconds);
     }
-
     @Override
     public String toString() {
         String texto = idTemaMusical + " | " + nome + " | " + anoLancamento;

@@ -17,26 +17,32 @@ public class Main {
     public enum LineResult {
         OK, ERRO
     }
+    private static ArrayList<String> verificarPadrao(String texto){
+        // "['\"]([^\\s]+)['\"]"
+        String padrao = "\"(.*?)\"|'([^']*)'";
 
+        ArrayList<String> resultado = new ArrayList<>();
+        // Compila o padrão em uma expressão regular
+        Pattern pattern = Pattern.compile(padrao);
+        Matcher matcher = pattern.matcher(texto);
 
+        // Itera sobre as correspondências encontradas
+        while (matcher.find()) {
+            // Obtém o valor correspondente entre as aspas simples ou duplas
+            String valor = matcher.group(1);
+            //valor = valor.replace("\"","");
+            resultado.add(valor);
+        }
+        return resultado;
+    }
     private static boolean validarArtista(String part) {
         String unicoArtista = "\\['[^']*'\\]";
         String artistasMultiplos = "^\\\"\\[('[\\w\\s]+')(?:,\\s\\1)*\\]\\\"$";
 
         return part.matches(unicoArtista) || part.matches(artistasMultiplos);
     }
-
-    public static void clearAll() {
-        songMap.clear();
-        detailsMap.clear();
-        artistsMap.clear();
-        fileInputResults.clear();
-    }
-    // Inicialize o conjunto para rastrear IDs duplicados
-
-
     public static LineResult adicionarMusica(String musica) {
-        String[] partes = musica.split(" @ ");
+        String[] partes = musica.split("@");
         // VERIFICA O INPUT CORRETO
         if (partes.length != 3) {
             return LineResult.ERRO;
@@ -44,16 +50,16 @@ public class Main {
 
         String id = partes[0].trim();
         String nome = partes[1].trim();
+        int ano = Integer.parseInt(partes[2].trim().replace("@", ""));
+        if (ano < 1 || ano > 2023){
+            return LineResult.ERRO;
+        }
         // VERIFICA SE JÁ FOI CRIADO ANTERIORMENTE
         if (songMap.containsKey(id)){
-            return null;
+            return LineResult.ERRO;
         }
         else {
             // CRIA O SONGS
-            int ano = Integer.parseInt(partes[2].trim().replace("@", ""));
-            if (ano < 1){
-                return LineResult.ERRO;
-            }
             Songs songAdd = new Songs(id, nome, ano);
             songMap.put(id, songAdd);
             idTemasMusicais.add(id);
@@ -79,7 +85,7 @@ public class Main {
 
 
     public static LineResult adicionarDetalhes(String detalhes) {
-        String[] partes = detalhes.split(" @ ");
+        String[] partes = detalhes.split("@");
         String idTema = partes[0].trim();
         // VERIFICA O INPUT CORRETO
         if (partes.length != 7){
@@ -112,7 +118,7 @@ public class Main {
         if (validacaoArtista(partes[1])) {
             // Verificar se a música existe antes de percorrer os artistas
             String musicaID = partes[0];
-            List<String> artistaArray = getArtists(partes[1]);
+            ArrayList<String> artistaArray = getArtists(partes[1]);
             for (String artista : artistaArray) {
                 if (songMap.containsKey(musicaID)) {
                     songMap.get(musicaID).numArtistas++;
@@ -122,6 +128,7 @@ public class Main {
                         artistsMap.put(artista, newArtist);
                     } else {
                         artistsMap.get(artista).numMusicas++;
+
                     }
                 }
             }
@@ -131,7 +138,7 @@ public class Main {
     }
     //RECEBE A STRING DO ARTISTA E REMOVE OS CARACTERES INDESEJAVEIS RETORNANDO UMA STRING PROCESSADA.
     public static ArrayList<String> getArtists(String artists) {
-        ArrayList<String> artistas = new ArrayList();
+        ArrayList<String> artistas = new ArrayList<>();
         artists = artists.trim();
         boolean multiple = false;
         if (artists.charAt(0) == '\"'){
@@ -142,8 +149,8 @@ public class Main {
         artists = artists.replace("\"", "");
         artists = artists.trim();
         String[] partes = artists.split("'");
-        for (int i = 0; i < partes.length; i++) {
-            artistas.add(partes[i].trim());
+        for (String parte : partes) {
+            artistas.add(parte.trim());
         }
         // remove any empty strings or strings with ,
         for (int i = 0; i < artistas.size(); i++) {
@@ -154,7 +161,7 @@ public class Main {
         if (multiple){
             return artistas;
         }else if(artistas.size() > 1) {
-            return new ArrayList<String>();
+            return new ArrayList<>();
         } else {
             return artistas;
         }
@@ -172,7 +179,6 @@ public class Main {
     }
 
     public static boolean loadFiles(File folder) {
-        clearAll();
         int numNaoOk = 0;
         int primeiraLinhaNOK = -1;
         int numLinha;
@@ -243,21 +249,29 @@ public class Main {
         if (commandParts.length < 2) {
             return null; // Comando inválido, retorna null
         }
-        String[] args = commandParts[1].split("\\s+");
+        String[] args;
+        if (commandParts[0].equals(ADD_TAGS) || commandParts[0].equals(REMOVE_TAGS)){
+            args = dividirArgs(commandParts[1],";");
+        }else {
+            args = dividirArgs(commandParts[1]," ");
+        }
+
         return new Query(commandParts[0], args);
     }
 
     public static ArrayList<String> parseMultipleArtists(String line) {
+        String padrao = "['\"]([^\\s]+)['\"]";
         ArrayList<String> nomes = new ArrayList<>();
+        // Compila o padrão em uma expressão regular
+        Pattern pattern = Pattern.compile(padrao);
+        Matcher matcher = pattern.matcher(line);
 
-        Pattern padrao = Pattern.compile("'((?:[^']|'')*)'");
-        Matcher matcher = padrao.matcher(line);
-
+        // Itera sobre as correspondências encontradas
         while (matcher.find()) {
-            String nome = matcher.group(1).replace("''", "'");
-            nomes.add(nome);
+            // Obtém o valor correspondente entre as aspas simples ou duplas
+            String valor = matcher.group(1);
+            nomes.add(valor.replace("\"",""));
         }
-
         return nomes;
     }
  // O execute tem que executar o parsecommand
@@ -312,10 +326,6 @@ public class Main {
     public static void main(String[] args)
     {
         if (loadFiles(new File("src/pt/ulusofona/aed/rockindeisi2023/files"))) {
-            ArrayList resultado = getObjects(TipoEntidade.TEMA);
-            for (Object o : resultado) {
-                System.out.println(o);
-            }
             Scanner scanner = new Scanner(System.in);
             String tipo = scanner.nextLine().toUpperCase();
             while (tipo != null && !tipo.equals(EXIT.toString())) {
