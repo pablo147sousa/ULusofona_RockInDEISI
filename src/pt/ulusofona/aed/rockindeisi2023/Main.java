@@ -17,6 +17,13 @@ public class Main {
     public enum LineResult {
         OK, ERRO
     }
+    public static void clearAll() {
+        songMap.clear();
+        detailsMap.clear();
+        artistsMap.clear();
+        fileInputResults.clear();
+    }
+
     private static ArrayList<String> verificarPadrao(String texto){
         // "['\"]([^\\s]+)['\"]"
         String padrao = "\"(.*?)\"|'([^']*)'";
@@ -85,7 +92,7 @@ public class Main {
 
 
     public static LineResult adicionarDetalhes(String detalhes) {
-        String[] partes = detalhes.split("@");
+        String[] partes = detalhes.split(" @ ");
         String idTema = partes[0].trim();
         // VERIFICA O INPUT CORRETO
         if (partes.length != 7){
@@ -128,7 +135,7 @@ public class Main {
                         artistsMap.put(artista, newArtist);
                     } else {
                         artistsMap.get(artista).numMusicas++;
-
+                        
                     }
                 }
             }
@@ -179,6 +186,7 @@ public class Main {
     }
 
     public static boolean loadFiles(File folder) {
+        clearAll();
         int numNaoOk = 0;
         int primeiraLinhaNOK = -1;
         int numLinha;
