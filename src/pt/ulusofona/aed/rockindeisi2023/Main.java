@@ -1,6 +1,7 @@
 package pt.ulusofona.aed.rockindeisi2023;
 
 import java.io.File;
+import java.sql.SQLOutput;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -8,9 +9,8 @@ import java.util.regex.Pattern;
 import static pt.ulusofona.aed.rockindeisi2023.QuerysEnum.*;
 
 public class Main {
-    static HashSet<String> idTemasMusicais = new HashSet<>();
     static LinkedHashMap<String,Songs> songMap = new LinkedHashMap<>();
-    static LinkedHashMap<String,Details> detailsMap = new LinkedHashMap<>();
+    //static LinkedHashMap<String,Details> detailsMap = new LinkedHashMap<>();
     static LinkedHashMap<String,Artists> artistsMap = new LinkedHashMap<>();
     static ArrayList<FileInputResult> fileInputResults = new ArrayList<>();
 
@@ -19,35 +19,11 @@ public class Main {
     }
     public static void clearAll() {
         songMap.clear();
-        detailsMap.clear();
+        //detailsMap.clear();
         artistsMap.clear();
         fileInputResults.clear();
     }
 
-    private static ArrayList<String> verificarPadrao(String texto){
-        // "['\"]([^\\s]+)['\"]"
-        String padrao = "\"(.*?)\"|'([^']*)'";
-
-        ArrayList<String> resultado = new ArrayList<>();
-        // Compila o padrão em uma expressão regular
-        Pattern pattern = Pattern.compile(padrao);
-        Matcher matcher = pattern.matcher(texto);
-
-        // Itera sobre as correspondências encontradas
-        while (matcher.find()) {
-            // Obtém o valor correspondente entre as aspas simples ou duplas
-            String valor = matcher.group(1);
-            //valor = valor.replace("\"","");
-            resultado.add(valor);
-        }
-        return resultado;
-    }
-    private static boolean validarArtista(String part) {
-        String unicoArtista = "\\['[^']*'\\]";
-        String artistasMultiplos = "^\\\"\\[('[\\w\\s]+')(?:,\\s\\1)*\\]\\\"$";
-
-        return part.matches(unicoArtista) || part.matches(artistasMultiplos);
-    }
     public static LineResult adicionarMusica(String musica) {
         String[] partes = musica.split("@");
         // VERIFICA O INPUT CORRETO
@@ -64,35 +40,16 @@ public class Main {
         // VERIFICA SE JÁ FOI CRIADO ANTERIORMENTE
         if (songMap.containsKey(id)){
             return LineResult.ERRO;
-        }
-        else {
+        } else {
             // CRIA O SONGS
             Songs songAdd = new Songs(id, nome, ano);
             songMap.put(id, songAdd);
-            idTemasMusicais.add(id);
             return LineResult.OK;
         }
     }
-    public static boolean validacaoArtista(String artistaTexto) {
-        int count = 0;
-        boolean ocorreVirgula = false;
-
-        for (int i = 0; i < artistaTexto.length(); i++) {
-            char c = artistaTexto.charAt(i);
-            if (c == ',') {
-                ocorreVirgula = true;
-            }
-            if (c == '"') {
-                count++;
-            }
-        }
-
-        return !ocorreVirgula || (count == 2 && artistaTexto.charAt(0) == '"');
-    }
-
 
     public static LineResult adicionarDetalhes(String detalhes) {
-        String[] partes = detalhes.split(" @ ");
+        String[] partes = detalhes.split("@");
         String idTema = partes[0].trim();
         // VERIFICA O INPUT CORRETO
         if (partes.length != 7){
@@ -100,87 +57,94 @@ public class Main {
         }
         Details detalhe = new Details(idTema, Integer.parseInt(partes[1].trim()), Integer.parseInt(partes[2].trim()), Integer.parseInt(partes[3].trim()), Double.parseDouble(partes[4].trim()), Double.parseDouble(partes[5].trim()), Double.parseDouble(partes[6].trim()));
         if (songMap.containsKey(idTema)){
-            detailsMap.put(idTema,detalhe);
+            //detailsMap.put(idTema,detalhe);
             songMap.get(idTema).detalhes = detalhe;
             return LineResult.OK;
         }
         return null;
     }
+
     public static void verMusicasSemDetalhes() {
         // musicas nao tem detalhes
-        for (String id : idTemasMusicais) {
-            if (!detailsMap.containsKey(id)){
-                songMap.remove(id);
+        ArrayList<String> toDelete = new ArrayList<String>();
+        for (Songs song : songMap.values()) {
+            if (song.detalhes == null){
+                toDelete.add(song.idTemaMusical);
             }
+        }
+        for (String id : toDelete) {
+            songMap.remove(id);
+        }
+    }
+
+    public static void verMusicasSemArtistas() {
+        ArrayList<String> toDelete = new ArrayList<String>();
+        for (Songs song : songMap.values()) {
+            if (song.artistsName.size() == 0){
+                toDelete.add(song.idTemaMusical);
+            }
+        }
+        for (String id : toDelete) {
+            songMap.remove(id);
         }
     }
     public static LineResult adicionarArtista(String artistasStr) {
-        String[] partes = artistasStr.split(" @ ");
+        String[] partes = artistasStr.split("@");
 
         // VERIFICA O INPUT CORRETO
         if (partes.length != 2) {
             return LineResult.ERRO;
         }
         // VERIFICA SE O INPUT ESTÁ BEM FORMATADO
-        if (validacaoArtista(partes[1])) {
+        ArrayList<String> artistaArray = parseMultipleArtists(partes[1].trim());
+        if (!artistaArray.isEmpty()) {
+
             // Verificar se a música existe antes de percorrer os artistas
-            String musicaID = partes[0];
-            ArrayList<String> artistaArray = getArtists(partes[1]);
-            for (String artista : artistaArray) {
-                if (songMap.containsKey(musicaID)) {
-                    songMap.get(musicaID).numArtistas++;
+            String musicaID = partes[0].trim();
+
+            if (songMap.containsKey(musicaID)) {
+                for (String artista : artistaArray) {
+                    if(songMap.get(musicaID).artistsName.contains(artista)){
+                        continue;
+                    }
+                    songMap.get(musicaID).artistsName.add(artista);
                     // Verificar se o artista já foi adicionado antes
                     if (!artistsMap.containsKey(artista)) {
-                        Artists newArtist = new Artists(musicaID,artista);
+                        Artists newArtist = new Artists(artista);
                         artistsMap.put(artista, newArtist);
                     } else {
                         artistsMap.get(artista).numMusicas++;
-                        
                     }
                 }
+            }else{
+                return LineResult.ERRO;
             }
-
+        }else{
+            return LineResult.ERRO;
         }
         return LineResult.OK;
     }
-    //RECEBE A STRING DO ARTISTA E REMOVE OS CARACTERES INDESEJAVEIS RETORNANDO UMA STRING PROCESSADA.
-    public static ArrayList<String> getArtists(String artists) {
-        ArrayList<String> artistas = new ArrayList<>();
-        artists = artists.trim();
-        boolean multiple = false;
-        if (artists.charAt(0) == '\"'){
-            multiple = true;
-        }
-        artists = artists.replace("[", "");
-        artists = artists.replace("]", "");
-        artists = artists.replace("\"", "");
-        artists = artists.trim();
-        String[] partes = artists.split("'");
-        for (String parte : partes) {
-            artistas.add(parte.trim());
-        }
-        // remove any empty strings or strings with ,
-        for (int i = 0; i < artistas.size(); i++) {
-            if (artistas.get(i).equals("") || artistas.get(i).equals(",")) {
-                artistas.remove(i);
-            }
-        }
-        if (multiple){
-            return artistas;
-        }else if(artistas.size() > 1) {
-            return new ArrayList<>();
-        } else {
-            return artistas;
-        }
-    }
 
-    public static String[] dividirArgs(String args, String divisor){
+
+
+    //RECEBE A STRING DO ARTISTA E REMOVE OS CARACTERES INDESEJAVEIS RETORNANDO UMA STRING PROCESSADA.
+
+    public static String[] dividirArgs(QuerysEnum command, String args) {
         String[] resultado = null;
-        if (divisor.equals(";")){
-            resultado =args.split(";");
-        }
-        if (divisor.equals(" ")){
-            resultado =args.split(" ");
+        switch (command) {
+            case COUNT_SONGS_YEAR -> resultado = new String[]{args};
+            case ADD_TAGS, REMOVE_TAGS -> resultado = args.split(";");
+            case GET_SONGS_BY_ARTIST -> resultado = args.split(" ", 2);
+            case GET_ARTISTS_FOR_TAG -> resultado = new String[]{args};
+            case GET_MOST_DANCEABLE -> resultado = args.split(" ", 3);
+            case GET_TOP_ARTISTS_WITH_SONGS_BETWEEN -> resultado = args.split(" ", 3);
+            case MOST_FREQUENT_WORDS_IN_ARTIST_NAME -> resultado = args.split(" ", 3);
+            case GET_ARTISTS_ONE_SONG -> resultado = args.split(" ", 2);
+            case GET_RISING_STARS -> resultado = args.split(" ", 3);
+            case COUNT_DUPLICATE_SONGS_YEAR -> resultado = new String[]{args};
+            case GET_UNIQUE_TAGS_IN_BETWEEN_YEARS -> resultado = args.split(" ", 2);
+            case GET_UNIQUE_TAGS -> resultado = new String[]{};
+            case GET_SONGS_BETWEEN_YEARS -> resultado = args.split(" ", 2);
         }
         return resultado;
     }
@@ -208,6 +172,7 @@ public class Main {
         } catch (Exception e) {
             return false;
         }
+
         //DETALHES
         numNaoOk = 0;
         primeiraLinhaNOK = -1;
@@ -228,6 +193,7 @@ public class Main {
             return false;
         }
         verMusicasSemDetalhes();
+
         // ARTISTS
         numNaoOk = 0;
         primeiraLinhaNOK = -1;
@@ -246,74 +212,116 @@ public class Main {
             }
             fileInputResults.add(new FileInputResult("song_artists.txt", numLinha - numNaoOk, numNaoOk, primeiraLinhaNOK));
         } catch (Exception e) {
-
             return false;
         }
+        verMusicasSemArtistas();
         return true;
     }
+
     //parse command vai receber a string e converter isso em um objeto Query
     public static Query parseCommand(String command) {
         String[] commandParts = command.split(" ", 2);
-        if (commandParts.length < 2) {
+        if (commandParts.length < 2 && !commandParts[0].equals(GET_UNIQUE_TAGS.toString())) {
             return null; // Comando inválido, retorna null
         }
-        String[] args;
-        if (commandParts[0].equals(ADD_TAGS) || commandParts[0].equals(REMOVE_TAGS)){
-            args = dividirArgs(commandParts[1],";");
-        }else {
-            args = dividirArgs(commandParts[1]," ");
+        String[] args = dividirArgs(QuerysEnum.valueOf(commandParts[0].toUpperCase()), (commandParts.length < 2) ? null : commandParts[1]);
+        if (args != null) {
+            return new Query(commandParts[0], args);
+        } else {
+            return null;
+        }
+    }
+    public static Query parseCommandGPT(String command) {
+        String[] parts = command.split(" ");
+        if (parts.length < 2) {
+            return null; // Comando inválido se não houver pelo menos dois componentes
         }
 
-        return new Query(commandParts[0], args);
+        String name = parts[0];
+        String[] args = Arrays.copyOfRange(parts, 1, parts.length);
+
+        return new Query(name, args);
     }
 
-    public static ArrayList<String> parseMultipleArtists(String line) {
-        String padrao = "['\"]([^\\s]+)['\"]";
-        ArrayList<String> nomes = new ArrayList<>();
-        // Compila o padrão em uma expressão regular
-        Pattern pattern = Pattern.compile(padrao);
-        Matcher matcher = pattern.matcher(line);
+    public static ArrayList<String> parseMultipleArtists(String str) {
+        ArrayList<String> result = new ArrayList<>();
 
-        // Itera sobre as correspondências encontradas
+        String cleanInput = str.trim().substring(1, str.length() - 1);
+        Pattern pattern = Pattern.compile("\"\"(.*?)\"\"|'(.*?)'");
+
+        Matcher matcher = pattern.matcher(cleanInput);
         while (matcher.find()) {
-            // Obtém o valor correspondente entre as aspas simples ou duplas
-            String valor = matcher.group(1);
-            nomes.add(valor.replace("\"",""));
+            String match = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+            result.add(match);
         }
-        return nomes;
+        return result;
     }
+
+    public static ArrayList<String> parseMultipleGPT(String str) {
+        ArrayList<String> artists = new ArrayList<>();
+
+        // Remover os caracteres '[' e ']'
+        str = str.replace("[", "").replace("]", "");
+
+        // Regex para encontrar os nomes entre aspas duplas ou aspas simples
+        Pattern pattern = Pattern.compile("\"{2}([^,]*?)\"{2}|'([^']*?)'");
+
+        Matcher matcher = pattern.matcher(str);
+
+        while (matcher.find()) {
+            String artist = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+            artists.add(artist);
+        }
+
+        return artists;
+    }
+
  // O execute tem que executar o parsecommand
     static QueryResult execute(String command) {
         Query comando = parseCommand(command);
         if (comando != null)
         {
             if (comando.name.equals(COUNT_SONGS_YEAR.toString())){
-                ExecFunctions.count_Songs_Year(comando.args);
-                return new QueryResult();
+                return ExecFunctions.count_Songs_Year(comando.args);
             }
             if (comando.name.equals(ADD_TAGS.toString())){
-                ExecFunctions.add_Tags(comando.args);
-                return new QueryResult();
+                return ExecFunctions.add_Tags(comando.args);
             }
             if (comando.name.equals(GET_ARTISTS_FOR_TAG.toString())){
-                ExecFunctions.get_Artists_For_Tag(comando.args);
-                return new QueryResult();
+                return ExecFunctions.get_Artists_For_Tag(comando.args);
             }
             if (comando.name.equals(GET_SONGS_BY_ARTIST.toString())){
-                ExecFunctions.get_Songs_By_Artists(comando.args);
-                return new QueryResult();
+                return ExecFunctions.get_Songs_By_Artists(comando.args);
             }
             if (comando.name.equals(REMOVE_TAGS.toString())){
-                ExecFunctions.remove_Tags(comando.args);
-                return new QueryResult();
+                return ExecFunctions.remove_Tags(comando.args);
             }
             if (comando.name.equals(GET_MOST_DANCEABLE.toString())){
-                ExecFunctions.get_Most_Danceable(comando.args);
-                return new QueryResult();
+                return ExecFunctions.get_Most_Danceable(comando.args);
             }
             if (comando.name.equals(COUNT_DUPLICATE_SONGS_YEAR.toString())){
-                ExecFunctions.count_Duplicate_Songs_Year(comando.args);
-                return new QueryResult();
+                return ExecFunctions.count_Duplicate_Songs_Year(comando.args);
+            }
+            if (comando.name.equals(GET_TOP_ARTISTS_WITH_SONGS_BETWEEN.toString())){
+                return ExecFunctions.get_Top_Artists_With_Songs_Between(comando.args);
+            }
+            if (comando.name.equals(MOST_FREQUENT_WORDS_IN_ARTIST_NAME.toString())){
+                return ExecFunctions.most_Frequent_Words_In_Artist_Name(comando.args);
+            }
+            if (comando.name.equals(GET_ARTISTS_ONE_SONG.toString())){
+                return ExecFunctions.get_Artists_One_Song(comando.args);
+            }
+            if (comando.name.equals(GET_RISING_STARS.toString())){
+                return ExecFunctions.get_Rising_Stars(comando.args);
+            }
+            if (comando.name.equals(GET_UNIQUE_TAGS_IN_BETWEEN_YEARS.toString())){
+                return ExecFunctions.get_Unique_Tags_In_Between_Years(comando.args);
+            }
+            if (comando.name.equals(GET_UNIQUE_TAGS.toString())){
+                return ExecFunctions.get_Unique_Tags(comando.args);
+            }
+            if (comando.name.equals(GET_SONGS_BETWEEN_YEARS.toString())){
+                return ExecFunctions.get_Songs_Between_Years(comando.args);
             }
         }
 
@@ -333,9 +341,9 @@ public class Main {
 
     public static void main(String[] args)
     {
-        if (loadFiles(new File("src/pt/ulusofona/aed/rockindeisi2023/files"))) {
+        if (loadFiles(new File("test-files"))) {
             Scanner scanner = new Scanner(System.in);
-            String tipo = scanner.nextLine().toUpperCase();
+            String tipo = scanner.nextLine();
             while (tipo != null && !tipo.equals(EXIT.toString())) {
                 QueryResult result = execute(tipo);
                 if (result == null) {
@@ -346,6 +354,8 @@ public class Main {
                 }
                 tipo = scanner.nextLine();
             }
+
+
         }
     }
 }

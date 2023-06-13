@@ -1,9 +1,14 @@
 package pt.ulusofona.aed.rockindeisi2023;
 
+import java.util.ArrayList;
+
 public class Songs {
     String idTemaMusical, nome;
-    Integer anoLancamento, numArtistas = 0;
+    Integer anoLancamento;
     Details detalhes;
+
+
+    ArrayList<String> artistsName = new ArrayList<String>();
     public Songs(String idTemaMusical, String nome, Integer anoLancamento) {
         this.idTemaMusical = idTemaMusical;
         this.nome = nome;
@@ -21,8 +26,12 @@ public class Songs {
             texto += " | " + converteDuracao(detalhes.duracao)  + " | " + detalhes.popularidade;
         }
         if (anoLancamento>=2000) {
-            texto += " | " + converteDuracao(detalhes.duracao) + " | " + detalhes.popularidade + " | " + numArtistas;
+            texto += " | " + converteDuracao(detalhes.duracao) + " | " + detalhes.popularidade + " | " + artistsName.size();
         }
         return texto;
     }
+    public int getYear() {
+        return anoLancamento;
+    }
+
 }
